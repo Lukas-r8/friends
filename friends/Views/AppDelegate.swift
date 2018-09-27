@@ -12,7 +12,7 @@ import Firebase
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    var window: UIWindow?
+    static var window: UIWindow?
     
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
@@ -20,10 +20,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         FirebaseApp.configure()
         
-        window = UIWindow(frame: UIScreen.main.bounds)
-        window?.backgroundColor = UIColor.init(cgColor: #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
-        window?.makeKeyAndVisible()
-        window?.rootViewController = CustomTabBarController()
+        AppDelegate.window = UIWindow(frame: UIScreen.main.bounds)
+        AppDelegate.window?.backgroundColor = UIColor.init(cgColor: #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
+        AppDelegate.window?.makeKeyAndVisible()
+        
+        
+        if Auth.auth().currentUser != nil {
+            
+            AppDelegate.window?.rootViewController = CustomTabBarController()
+
+        } else {
+            
+            AppDelegate.window?.rootViewController = LoginPage()
+            
+        }
+        
         
         return true
     }

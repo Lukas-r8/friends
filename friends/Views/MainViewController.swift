@@ -15,42 +15,57 @@ import FirebaseStorage
 class MainViewController: UIViewController {
     var firebaseAuth = Auth.auth()
     var firebaseRef = Database.database().reference(fromURL: "https://friends-be9c9.firebaseio.com/")
-    lazy var fireUser: User? = {
-        let fire = firebaseAuth.currentUser
-        return fire
-    }()
-    
+    var userData = [String:AnyObject]()
     
     override var preferredStatusBarStyle: UIStatusBarStyle {return .lightContent}
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(true)
+   
+    override func loadView() {
+        super.loadView()
         checkIfUserIsLogged()
-        
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .white
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(handleLogout))
         navigationController?.extensionSetNavigationControllerBar(color: #colorLiteral(red: 0.2196078449, green: 0.007843137719, blue: 0.8549019694, alpha: 1))
+        getCurrentUserData()
+
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+        
+        
         
     }
     
     
+    
+    
+    func getCurrentUserData(){
+        guard let uid = firebaseAuth.currentUser?.uid else {return}
+        firebaseRef.child("users").child(uid).observe(DataEventType.value) { (snapshot) in
+            //Retrieve data from database... (users, name)
+                if let dictData = snapshot.value as? [String:AnyObject]{
+                    self.userData = dictData
+                    self.navigationItem.title = dictData["name"] as? String
+                    self.view.reloadInputViews()
+                }
+        }
+            
+    }
+    
+    
+    
     func checkIfUserIsLogged(){
         if firebaseAuth.currentUser == nil{
-            present(LoginPage(), animated: true, completion: nil)
-        } else {
-            guard let uid = firebaseAuth.currentUser?.uid else {return}
-            print("user uid:",uid)
-            firebaseRef.child("users").child(uid).observe(DataEventType.value) { (snapshot) in
-                //Retrieve data from database... (users, name)
-                if let dictData = snapshot.value as? [String:AnyObject]{
-                    self.navigationItem.title = dictData["name"] as? String
-                }
+            let loginPageVC = LoginPage()
+            present(loginPageVC, animated: true) {
+                AppDelegate.window?.rootViewController = loginPageVC
             }
         }
-        
     }
     
     
@@ -68,7 +83,12 @@ class MainViewController: UIViewController {
     }
     
     
-    
+    deinit{
+        
+        print("deininininininiintializeddddddd?????????????")
+        
+        
+    }
 
 
 }

@@ -19,7 +19,6 @@ extension LoginPage{
         circularViewPhoto.widthAnchor.constraint(equalToConstant: 200).isActive = true
         circularViewPhoto.heightAnchor.constraint(equalToConstant: 200).isActive = true
         
-        
     }
     
     func containerViewAddConst(){
@@ -164,6 +163,7 @@ extension LoginPage {
     
     // register user
     @objc func handleLoginRegisterButton(){
+        self.view.endEditing(true)
         guard let title = segmentedControl.titleForSegment(at: segmentedControl.selectedSegmentIndex) else {return}
         
         // safe unwrapping...
@@ -198,53 +198,78 @@ extension LoginPage {
     
     
     func handleRegister(email: String, password: String, name: String, completion: @escaping (Bool) -> Void){
-        firebaseAuth.createUser(withEmail: email, password: password) { (res, error) in
-            
-            
-            if let err = error {
-                print("not possible to register:",err)
-                self.showAlertModal(title: "Register Failed", Message: err.localizedDescription)
-                return
-            }
-            self.firebaseAuth.currentUser?.sendEmailVerification(completion: { (err) in
-                print("email sent")
-                if err != nil {print(err!.localizedDescription);return}
-            })
-            guard let uid = res?.user.uid else {return}
-            let userRef = self.firebaseRef.child("users").child(uid)
-            let values = ["name":name,"email":email]
-            
-            userRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
-                if let error = err {
-                    print("error upon updateChildValues registering: ",error)
+        
+        addRemoveActivity(add: true, loadMessage: "Registering")
+        
+        DispatchQueue.global(qos: .userInteractive).async {
+            self.firebaseAuth.createUser(withEmail: email, password: password) { (res, error) in
+                
+                if let err = error {
+                    print("not possible to register:",err)
+                    self.showAlertModal(title: "Register Failed", Message: err.localizedDescription)
+                    self.addRemoveActivity(add: false, loadMessage: "")
+
                     return
-                    
                 }
+                self.firebaseAuth.currentUser?.sendEmailVerification(completion: { (err) in
+                    print("email sent")
+                    if err != nil {print(err!.localizedDescription); self.addRemoveActivity(add: false, loadMessage: ""); return}
+                })
+                guard let uid = res?.user.uid else {self.addRemoveActivity(add: false, loadMessage: ""); return}
+                let userRef = self.firebaseRef.child("users").child(uid)
+                let values = ["name":name,"email":email]
                 
-                print("updated sucessfully, reference:",ref)
+                userRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
+                    if let error = err {
+                        print("error upon updateChildValues registering: ",error)
+                        self.addRemoveActivity(add: false, loadMessage: "")
+                        return
+                        
+                    }
+                    
+                    print("updated sucessfully, reference:",ref)
+                    
+                    completion(true)
+                })
                 
-                completion(true)
-            })
-            
-            print("Authentication result: ", res?.user.displayName ?? "failed auth")
-        }
-    }
-    
-    
-    func handleLogin(email: String, password: String){
-        firebaseAuth.signIn(withEmail: email, password: password) { (res, err) in
-            if let error = err {
-                print(error)
-                self.showAlertModal(title: "Login Failed", Message: error.localizedDescription)
-                return
+                print("Authentication result: ", res?.user.displayName ?? "failed auth")
+                self.addRemoveActivity(add: false, loadMessage: "")
+
             }
             
-            print("loginSucessful:", res?.description ?? "description nil")
-            self.dismiss(animated: true, completion: nil)
+                
             
             
         }
         
+    }
+    
+    
+    
+    
+    func handleLogin(email: String, password: String){
+        addRemoveActivity(add: true, loadMessage: "Login...")
+        DispatchQueue.global(qos: .userInteractive).async {
+            
+            self.firebaseAuth.signIn(withEmail: email, password: password) { (res, err) in
+                if let error = err {
+                    print(error)
+                    self.showAlertModal(title: "Login Failed", Message: error.localizedDescription)
+                    self.addRemoveActivity(add: false, loadMessage: "")
+                    return
+                }
+                
+                print("loginSucessful:", res?.description ?? "description nil")
+                let customTabBarControllerVCS = CustomTabBarController()
+                self.present(customTabBarControllerVCS, animated: true, completion: {
+                    AppDelegate.window?.rootViewController = customTabBarControllerVCS
+                    self.addRemoveActivity(add: false, loadMessage: "")
+                })
+
+            }
+            
+        }
+
     }
     
     //segmented control login/Register
@@ -269,6 +294,90 @@ extension LoginPage {
                 self.view.layoutIfNeeded()
             })
             
+        }
+        
+    }
+    
+    
+    
+    
+    
+    // Activity Indicator View.....
+    
+    func addRemoveActivity(add: Bool, loadMessage: String){
+        
+        if add {
+            
+            let dimmerView: UIView = {
+                let dim = UIView()
+                dim.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+                dim.translatesAutoresizingMaskIntoConstraints = false
+                dim.alpha = 0
+                return dim
+            }()
+            
+            
+            
+            
+            let container: UIView = {
+                let cont = UIView()
+                cont.translatesAutoresizingMaskIntoConstraints = false
+                cont.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+                cont.layer.cornerRadius = 10
+                return cont
+            }()
+            
+            let label: UILabel = {
+                let lab = UILabel()
+                lab.text = loadMessage
+                lab.translatesAutoresizingMaskIntoConstraints = false
+                lab.font = UIFont.boldSystemFont(ofSize: 15)
+                lab.textAlignment = .center
+                lab.textColor = .white
+                return lab
+            }()
+            
+            activityView.startAnimating()
+            
+            container.addSubview(label)
+            container.addSubview(self.activityView)
+            dimmerView.addSubview(container)
+            self.view.addSubview(dimmerView)
+            
+            // add constraints...
+            
+            dimmerView.widthAnchor.constraint(equalTo: self.view.widthAnchor).isActive = true
+            dimmerView.heightAnchor.constraint(equalTo: self.view.heightAnchor).isActive = true
+            dimmerView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
+            dimmerView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor).isActive = true
+  
+            container.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
+            container.centerYAnchor.constraint(equalTo: self.view.centerYAnchor).isActive = true
+            container.widthAnchor.constraint(equalToConstant: 100).isActive = true
+            container.heightAnchor.constraint(equalToConstant: 120).isActive = true
+            
+            label.topAnchor.constraint(equalTo: container.topAnchor, constant: 10).isActive = true
+            label.widthAnchor.constraint(equalTo: container.widthAnchor).isActive = true
+            label.heightAnchor.constraint(equalToConstant: 20).isActive = true
+            
+            self.activityView.centerYAnchor.constraint(equalTo: container.centerYAnchor, constant: 30).isActive = true
+            self.activityView.centerXAnchor.constraint(equalTo: container.centerXAnchor).isActive = true
+            
+            UIView.animate(withDuration: 0.3) {
+                dimmerView.alpha = 1
+            }
+            view.isUserInteractionEnabled = false
+            
+        } else {
+            let dimmerSuperView = self.activityView.superview!.superview!
+            UIView.animate(withDuration: 0.3, animations: {
+                dimmerSuperView.alpha = 0
+            }) { (true) in
+                dimmerSuperView.removeFromSuperview()
+                self.activityView.stopAnimating()
+                self.view.isUserInteractionEnabled = true
+                
+            }
         }
         
     }

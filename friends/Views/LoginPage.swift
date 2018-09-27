@@ -120,6 +120,13 @@ class LoginPage: UIViewController {
         return button
     }()
     
+    let activityView: UIActivityIndicatorView = {
+        let act = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorView.Style.whiteLarge)
+        act.translatesAutoresizingMaskIntoConstraints = false
+        act.hidesWhenStopped = true
+        return act
+    }()
+    
     override func viewDidLayoutSubviews() {
         // get the CGRect of subviews after layout is done....
         distanceButtonFromViewBottom = view.frame.height - (registerLoginButton.frame.origin.y + 50)
@@ -129,6 +136,8 @@ class LoginPage: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        view.backgroundColor = .white
         
         containerView.extensionAddSubViewAtOnce(UIViews: nameTextField,emailTextField,passwordTextField)
         
