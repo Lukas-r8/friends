@@ -143,7 +143,7 @@ class LoginPage: UIViewController {
         
         view.extensionAddSubViewAtOnce(UIViews: containerView,segmentedControl,registerLoginButton,circularViewPhoto)
         view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard)))
-        
+                
         circularViewPhotoAddConst()
         containerViewAddConst()
         nameTextFieldAddConst()
@@ -155,7 +155,23 @@ class LoginPage: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(changeConstraintsForKeyboard), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+
+        containerViewYanchor?.constant = 75
+        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut, animations: {
+            self.view.layoutIfNeeded()
+        })
  
+    }
+    
+    
+    func emptyAllTextFields(){
+        nameTextField.text = ""
+        emailTextField.text = ""
+        passwordTextField.text = ""
+  
+    }
 
     
     @objc func dismissKeyboard(){

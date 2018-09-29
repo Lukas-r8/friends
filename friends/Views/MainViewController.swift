@@ -20,10 +20,7 @@ class MainViewController: UIViewController {
     override var preferredStatusBarStyle: UIStatusBarStyle {return .lightContent}
     
    
-    override func loadView() {
-        super.loadView()
-        checkIfUserIsLogged()
-    }
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -59,23 +56,20 @@ class MainViewController: UIViewController {
     
     
     
-    func checkIfUserIsLogged(){
-        if firebaseAuth.currentUser == nil{
-            let loginPageVC = LoginPage()
-            present(loginPageVC, animated: true) {
-                AppDelegate.window?.rootViewController = loginPageVC
-            }
-        }
-    }
-    
+
     
     
     @objc func handleLogout(){
         do {
-           try  firebaseAuth.signOut()
+            try  firebaseAuth.signOut()
             print("logged out")
-            present(LoginPage(), animated: true, completion: nil)
-            
+            self.dismiss(animated: true)
+            print("pay Attention to this",self.isBeingDismissed)
+            if !self.isBeingDismissed {
+                let loginPageVC = LoginPage()
+                self.present(loginPageVC, animated: true, completion: nil)
+            }
+  
         }catch let error{
             print("error on sign out:", error)
             return

@@ -260,11 +260,20 @@ extension LoginPage {
                 }
                 
                 print("loginSucessful:", res?.description ?? "description nil")
-                let customTabBarControllerVCS = CustomTabBarController()
-                self.present(customTabBarControllerVCS, animated: true, completion: {
-                    AppDelegate.window?.rootViewController = customTabBarControllerVCS
+                
+                self.dismiss(animated: true, completion: {
                     self.addRemoveActivity(add: false, loadMessage: "")
+
                 })
+                
+                if !self.isBeingDismissed {
+                    let customTabBarControllerVCS = CustomTabBarController()
+                    self.present(customTabBarControllerVCS, animated: true, completion: {
+                        self.addRemoveActivity(add: false, loadMessage: "")
+                        self.emptyAllTextFields()
+                        
+                    })
+                }
 
             }
             
